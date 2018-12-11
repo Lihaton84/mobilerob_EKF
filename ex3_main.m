@@ -3,7 +3,7 @@ clear variables;
 close all;
 
 %% Parameters
-virtualMachineIP = '192.168.204.137';
+virtualMachineIP = '192.168.8.117';
 localIP = '192.168.70.1';
 controllerType = 'purePursuit'; % 'purePursuit' or 'RezasController'
 lookaheadDistance = 0.3; % lookahead distance for the controller
@@ -25,10 +25,10 @@ plot(path(:,1), path(:,2), 'ko-', 'linewidth', 2);
 %   smoothPath.qd     - points
 %   smoothPath.qd_dot - velocities
 %   smoothPath.time   - times
-smoothPath = path2smoothPath(path);
+%smoothPath = path2smoothPath(path);
 
 % Plot the smoothed path
-plot(smoothPath.qd(1,:), smoothPath.qd(2,:), 'r-', 'linewidth', 2);
+%plot(smoothPath.qd(1,:), smoothPath.qd(2,:), 'r-', 'linewidth', 2);
 
 %% Connect to the TurtleBot in Gazebo
 rosshutdown % make sure there's no existing matlab ROS node
@@ -43,9 +43,9 @@ global odomPose;
 global gazeboPose;
 
 % Create robot controller
-pathFollower = RobotController('path', smoothPath, ...
-                               'controllerType', controllerType, ...
-                               'lookaheadDistance', lookaheadDistance);
+%pathFollower = RobotController('path', smoothPath, ...
+ %                              'controllerType', controllerType, ...
+  %                             'lookaheadDistance', lookaheadDistance);
 
 % Create a scanner object for retrieving landmark measurements
 landmarkScanner = MoroLandmarkScanner();
