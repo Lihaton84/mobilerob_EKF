@@ -4,12 +4,13 @@ close all;
 
 %% Parameters
 virtualMachineIP = '192.168.8.117';
-localIP = '192.168.70.1';
+localIP = '192.168.8.100';
 controllerType = 'purePursuit'; % 'purePursuit' or 'RezasController'
 lookaheadDistance = 0.3; % lookahead distance for the controller
 motionModelType = 'odometry'; % 'odometry' or 'velocity'
 useRanges = true; % whether to use range measurements or not
 filterType = 'ml-ekf'; % 'MonteCarlo' or 'EKFSLAM' or 'ML-EKF'
+knownCorrespondes = 'false';
 
 %% Load the given map and path
 filePath = fullfile(fileparts(which(mfilename)), 'moroparams.mat');
@@ -25,14 +26,16 @@ plot(path(:,1), path(:,2), 'ko-', 'linewidth', 2);
 %   smoothPath.qd     - points
 %   smoothPath.qd_dot - velocities
 %   smoothPath.time   - times
-%smoothPath = path2smoothPath(path);
+smoothPath = path2smoothPath(path);
 
 % Plot the smoothed path
-%plot(smoothPath.qd(1,:), smoothPath.qd(2,:), 'r-', 'linewidth', 2);
+plot(smoothPath.qd(1,:), smoothPath.qd(2,:), 'r-', 'linewidth', 2);
 
 %% Connect to the TurtleBot in Gazebo
 rosshutdown % make sure there's no existing matlab ROS node
 setenv('ROS_IP', localIP);
+setenv('ROS_MASTERU_URI', 'http://192.168.8.117:11311');
+setenv('ROS_HOSTNAME',localIP);
 rosinit(virtualMachineIP);
 
 % Create ROS subscribers for retrieving odometry measurements
@@ -43,9 +46,9 @@ global odomPose;
 global gazeboPose;
 
 % Create robot controller
-%pathFollower = RobotController('path', smoothPath, ...
- %                              'controllerType', controllerType, ...
-  %                             'lookaheadDistance', lookaheadDistance);
+pathFollower = RobotController('path', smoothPath, ...
+                               'controllerType', controllerType, ...
+                               'lookaheadDistance', lookaheadDistance);
 
 % Create a scanner object for retrieving landmark measurements
 landmarkScanner = MoroLandmarkScanner();
@@ -68,8 +71,7 @@ switch upper(filterType)
     case 'ML-EKF'
         filter = ExtendedKalmanFilter(...
             'nInputs', nInputs, ...
-            'motionModelType', motionModelType, ...
-            'knownCorrespondences', false);
+            'motionModelType', motionModelType, 'knownCorrespondes', knownCorrespondes);
 end
 
 %% Run the main loop until the pathFollower has finished.
@@ -113,7 +115,7 @@ while ~isDone(pathFollower)
     [poseEstimate, covarianceEstimate] = filter(control,sensorReadings{:});
 
     % Calculate and publish the robot control
-    [v,w] = pathFollower(poseEstimate(1:3));
+     [v,w] = pathFollower(poseEstimate(1:3));
 
     % Plot the robot's estimated pose on the map.
     % Delete previous plot
